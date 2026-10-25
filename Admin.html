@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Portal - SHREE SHYAM CSC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-200 font-sans">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded shadow-md w-96">
+            <h2 class="text-2xl font-bold text-center mb-6">Owner Login</h2>
+            <div class="space-y-4">
+                <input type="text" id="admin-id" placeholder="Admin ID" class="w-full border p-2 rounded">
+                <input type="password" id="admin-pass" placeholder="Password" class="w-full border p-2 rounded">
+                <button onclick="login()" class="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700">Login</button>
+                <p id="login-error" class="text-red-500 text-sm hidden">Incorrect ID or Password!</p>
+            </div>
+            <p class="text-xs text-gray-500 mt-4 text-center">Default ID: <strong>admin</strong> | Password: <strong>shyam123</strong></p>
+        </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD (Hidden until login) -->
+    <div id="dashboard" class="hidden">
+        <nav class="bg-gray-800 text-white p-4 flex justify-between items-center shadow">
+            <h1 class="text-xl font-bold">Shree Shyam CSC - Owner Dashboard</h1>
+            <div>
+                <button onclick="logout()" class="bg-red-500 px-4 py-1 rounded text-sm hover:bg-red-600">Logout</button>
+            </div>
+        </nav>
+
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+            
+            <!-- Controls (Status & Add Service) -->
+            <div class="space-y-6">
+                <!-- Shop Status -->
+                <div class="bg-white p-4 shadow rounded">
+                    <h2 class="font-bold text-lg border-b mb-3">Shop Controls</h2>
+                    <label class="block text-gray-700 mb-2">Set Current Status:</label>
+                    <select id="status-select" onchange="updateStatus()" class="w-full border p-2 rounded bg-gray-50">
+                        <option value="OPEN">OPEN</option>
+                        <option value="CLOSED">CLOSED</option>
+                    </select>
+                </div>
+
+                <!-- Add Service -->
+                <div class="bg-white p-4 shadow rounded">
+                    <h2 class="font-bold text-lg border-b mb-3">Add New Service</h2>
+                    <form id="add-service-form" class="space-y-3">
+                        <input type="text" id="srv-name" placeholder="Service Name (e.g., PAN Card)" required class="w-full border p-2 rounded">
+                        <input type="number" id="srv-charge" placeholder="Charges in ₹ (e.g., 150)" required class="w-full border p-2 rounded">
+                        <input type="text" id="srv-timeline" placeholder="Timeline (e.g., 2-3 Days)" required class="w-full border p-2 rounded">
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded font-bold">Add Service</button>
+                    </form>
+                </div>
+
+                <!-- Delete Services Data -->
+                <div class="bg-white p-4 shadow rounded">
+                    <h2 class="font-bold text-lg border-b mb-3 text-red-600">Reset Data</h2>
+                    <button onclick="clearBookings()" class="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded mb-2">Clear All Bookings</button>
+                </div>
+            </div>
+
+            <!-- Public Bookings Viewer -->
+            <div class="lg:col-span-2 bg-white p-4 shadow rounded">
+                <h2 class="font-bold text-xl border-b pb-2 mb-4">Live Customer Bookings</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 border-b">
+                                <th class="p-2">Date/Time</th>
+                                <th class="p-2">Name</th>
+                                <th class="p-2">Phone</th>
+                                <th class="p-2">Requested Service</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookings-table">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple Login Logic
+        function login() {
+            const id = document.getElementById('admin-id').value;
+            const pass = document.getElementById('admin-pass').value;
+            // Default login details here
+            if(id === 'admin' && pass === 'shyam123') {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                loadDashboard();
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('admin-id').value = '';
+            document.getElementById('admin-pass').value = '';
+        }
+
+        // Manage Status
+        function updateStatus() {
+            let status = document.getElementById('status-select').value;
+            localStorage.setItem('csc_status', status);
+            alert("Shop status updated to " + status + " on the public website!");
+        }
+
+        // Manage Services
+        document.getElementById('add-service-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let services = JSON.parse(localStorage.getItem('csc_services')) || [];
+            services.push({
+                name: document.getElementById('srv-name').value,
+                charge: document.getElementById('srv-charge').value,
+                timeline: document.getElementById('srv-timeline').value
+            });
+            localStorage.setItem('csc_services', JSON.stringify(services));
+            this.reset();
+            alert("Service added successfully!");
+        });
+
+        // Load Bookings Data
+        function loadDashboard() {
+            // Set correct status dropdown
+            document.getElementById('status-select').value = localStorage.getItem('csc_status') || 'OPEN';
+
+            // Load bookings
+            let bookings = JSON.parse(localStorage.getItem('csc_bookings')) || [];
+            let tbody = document.getElementById('bookings-table');
+            tbody.innerHTML = '';
+            
+            if(bookings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">No bookings yet.</td></tr>';
+            } else {
+                // Reverse to show newest first
+                bookings.reverse().forEach(b => {
+                    tbody.innerHTML += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-2 text-sm text-gray-600">${b.date}</td>
+                            <td class="p-2 font-bold">${b.name}</td>
+                            <td class="p-2 text-blue-600">${b.phone}</td>
+                            <td class="p-2">${b.service}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function clearBookings() {
+            if(confirm("Are you sure you want to delete all customer bookings?")) {
+                localStorage.removeItem('csc_bookings');
+                loadDashboard();
+            }
+        }
+
+        // Refresh bookings automatically every 5 seconds
+        setInterval(() => {
+            if(!document.getElementById('dashboard').classList.contains('hidden')) {
+                loadDashboard();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
