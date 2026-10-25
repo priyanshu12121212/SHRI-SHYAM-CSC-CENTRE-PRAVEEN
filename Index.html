@@ -133,3 +133,60 @@
     </script>
 </body>
 </html>
+<!-- Booking Time Section -->
+<div style="margin-bottom: 15px;">
+    <label for="bookingTime"><b>Select Booking Time:</b></label><br>
+    <input type="time" id="bookingTime" required style="padding: 8px; width: 100%; max-width: 300px;">
+</div>
+
+<!-- Payment Section -->
+<div style="border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; max-width: 300px;">
+    <h3>Payment Details</h3>
+    <p>Please pay the fees using UPI.</p>
+    <p><b>UPI ID:</b> shreeshyamcsc@ybl</p> <!-- Replace with your actual UPI ID -->
+    
+    <!-- Add your actual QR code image to your GitHub repo and replace the src below -->
+    <img src="qr-code.jpg" alt="Scan to Pay" style="width: 100%; max-width: 200px; margin-bottom: 10px;">
+    
+    <label for="transactionId"><b>Enter 12-digit UTR / Transaction ID:</b></label><br>
+    <input type="text" id="transactionId" placeholder="e.g., 312345678901" required style="padding: 8px; width: 100%;">
+    
+    <label for="paymentAccount" style="display:block; margin-top:10px;"><b>Which App Did You Use?</b></label>
+    <select id="paymentAccount" style="padding: 8px; width: 100%;">
+        <option value="PhonePe">PhonePe</option>
+        <option value="Google Pay">Google Pay</option>
+        <option value="Paytm">Paytm</option>
+        <option value="Other">Other</option>
+    </select>
+</div>
+
+<button onclick="submitBooking()" style="padding: 10px 20px; background-color: blue; color: white; border: none;">Submit Booking</button>
+
+<script>
+// This JavaScript saves the data so the Admin portal can read it
+function submitBooking() {
+    const time = document.getElementById('bookingTime').value;
+    const txnId = document.getElementById('transactionId').value;
+    const account = document.getElementById('paymentAccount').value;
+
+    if(!time || !txnId) {
+        alert("Please select a time and enter the Transaction ID!");
+        return;
+    }
+
+    // Creating a booking object
+    const bookingData = {
+        time: time,
+        transactionId: txnId,
+        paymentAccount: account,
+        status: "Pending Verification"
+    };
+
+    // Save to Local Storage (For testing purposes)
+    let bookings = JSON.parse(localStorage.getItem('cscBookings')) || [];
+    bookings.push(bookingData);
+    localStorage.setItem('cscBookings', JSON.stringify(bookings));
+
+    alert("Booking Submitted! Please wait for Admin to verify your payment.");
+}
+</script>
